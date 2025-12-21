@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Income Statement</h1>
+
+    <div class="card">
+        <div class="status">
+            <div><b>Status:</b> {{ status }}</div>
+        </div>
+
+        <form action="/income-statement" method="get" class="row">
+            <label class="label">Period</label>
+            <select name="period_idx" onchange="this.form.submit()">
+                {% if periods|length == 0 %}
+                    <option value="0">No periods found</option>
+                {% else %}
+                    {% for p in periods %}
+                        <option value="{{ loop.index0 }}" {% if loop.index0 == selected_idx %}selected{% endif %}>
+                            {{ p }}
+                        </option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+            <noscript><button type="submit">Go</button></noscript>
+        </form>
+
+
+        <h2>Statement</h2>
+
+        {% if rows|length == 0 %}
+            <div class="muted">
+                No data for this period. This usually means the row labels exist but that period column is blank, or the parser skipped the cells.
+            </div>
+        {% else %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        {% for c in columns %}
+                            <th>{{ c }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                        <tr>
+                            {% for c in columns %}
+                                <td>{{ r[c] }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+    </div>
+{% endblock %}

@@ -1,5 +1,8 @@
 # Financial Analysis Forge
 
+![Version](https://img.shields.io/badge/version-0.0.2-blue)
+
+
 Created by Jonathon Waughon.
 
 Financial Analysis Forge is a Python-based project for building interactive financial analysis tools.  
@@ -9,11 +12,10 @@ This repository is currently an early MVP focused on infrastructure and iteratio
 
 ---
 
-## Current Features
-- Gradio-based web UI
-- Upload Excel (`.xlsx`, `.xls`) files
-- Preview the first sheet as a table
-- Local development with Python virtual environment
+## Current Version: **{{VERSION}}**
+- Replaced Gradio with Quart for better web handling
+- Added Excel input handling
+- Added automatic Excel data reading --> Income Statement template
 
 ---
 

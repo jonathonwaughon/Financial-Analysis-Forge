@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Upload Excel</h1>
+
+    <div class="card">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label class="label">Capital IQ Excel (.xlsx/.xls)</label>
+            <input type="file" name="file" accept=".xlsx,.xls" required />
+            <div class="row">
+                <button type="submit">Upload + Parse</button>
+            </div>
+        </form>
+
+        <div class="status">
+            <div><b>Status:</b> {{ status }}</div>
+            <div><b>Excel:</b> {{ excel_path or "" }}</div>
+        </div>
+    </div>
+{% endblock %}
