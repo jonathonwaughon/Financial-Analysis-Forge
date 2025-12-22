@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="page-header">
+        <div>
+            <h1 class="title">Income Statement Item</h1>
+            <div class="subtitle">
+                <span class="pill">Status: {{ status }}</span>
+                <span class="pill">Item: {{ resolved_line_item if resolved_line_item else line_item }}</span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <a class="btn btn-ghost" href="/income-statement">Back</a>
+        </div>
+    </div>
+
+    <div class="card">
+        {% if not resolved_line_item %}
+            <div class="muted">
+                Could not find this line item in the parsed data.
+            </div>
+        {% else %}
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Most recent value</div>
+                    <div class="kpi-value">{{ latest_display }}</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-label">Average across all periods</div>
+                    <div class="kpi-value">{{ avg_display }}</div>
+                </div>
+            </div>
+
+            <h2 class="section-title">Trend</h2>
+            <img
+                class="debug-img"
+                src="/income_statement/{{ resolved_line_item }}/plot.png"
+                alt="Trend plot"
+            />
+
+            <h2 class="section-title">All Periods</h2>
+            {% if series_rows|length == 0 %}
+                <div class="muted">No series data available.</div>
+            {% else %}
+                <table class="table table-modern">
+                    <thead>
+                        <tr>
+                            <th>period</th>
+                            <th style="text-align:right;">value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in series_rows %}
+                            <tr>
+                                <td>{{ r["period"] }}</td>
+                                <td class="td-num">{{ r["value_display"] }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}

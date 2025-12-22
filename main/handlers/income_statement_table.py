@@ -12,7 +12,7 @@ from typing import Optional, Tuple, List, Dict, Any, Callable
 
 import pandas as pd
 
-from main.app_state import set_table
+from main.globals.app_state import set_table
 
 
 def _norm(text: object) -> str:

@@ -1,9 +1,12 @@
-## Current Version (0.0.3)
+## Current Version (0.1.0)
+    - Modulated html templates and template handlers
+    - Formatted startup logs
+    - Polished program
+
+## Version 0.0.3
     - Buffed styling of the project, ported into html only
     - Reworked to be strictly Python based
     - Added Debug to statement page
-
-
 ## Version 0.0.2
     - Replaced Gradio with Quart for better web handling
     - Added Excel input handling

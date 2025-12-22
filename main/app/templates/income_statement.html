@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block content %}
@@ -74,12 +73,26 @@
                     {% for r in rows %}
                         <tr>
                             {% for c in columns %}
-                                <td class="{% if c != 'line_item' %}td-num{% endif %}">{{ r[c] }}</td>
+                                {% if c == "line_item" %}
+                                    <td>
+                                        <a class="linkish" href="/income_statement/{{ r[c] }}">{{ r[c] }}</a>
+                                    </td>
+                                {% elif c == "value" %}
+                                    <td class="td-num">
+                                        <a class="linkish" href="/income_statement/{{ r['line_item'] }}">{{ r[c] }}</a>
+                                    </td>
+                                {% else %}
+                                    <td class="td-num">{{ r[c] }}</td>
+                                {% endif %}
                             {% endfor %}
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
+
+            <div class="muted" style="margin-top:10px;">
+                Tip: click any line item (or its value) to open a trend page.
+            </div>
         {% endif %}
     </div>
 
