@@ -2,3 +2,4 @@ quart
 hypercorn
 pandas
 openpyxl
+matplotlib

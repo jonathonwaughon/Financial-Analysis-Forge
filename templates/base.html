@@ -1,10 +1,301 @@
+
+
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Financial Analysis Forge</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+
+    <style>
+        :root {
+            --bg: #0b0f17;
+            --card: #121a26;
+            --text: #e7eefc;
+            --muted: #9db0d0;
+            --border: #223047;
+            --accent: #4f8cff;
+        }
+
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(18, 26, 38, 0.9);
+            position: sticky;
+            top: 0;
+        }
+
+        .brand {
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        .nav a {
+            color: var(--muted);
+            text-decoration: none;
+            margin-left: 14px;
+        }
+
+        .nav a:hover {
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 18px auto;
+            padding: 0 14px 40px 14px;
+        }
+
+        .card {
+            border: 1px solid var(--border);
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .label {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .status {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        button {
+            background: var(--accent);
+            color: #07101f;
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        button:hover {
+            filter: brightness(1.05);
+        }
+
+        select, input[type="file"] {
+            border: 1px solid var(--border);
+            background: rgba(10, 15, 24, 0.55);
+            color: var(--text);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        .table th, .table td {
+            border: 1px solid var(--border);
+            padding: 8px 10px;
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        .table th {
+            color: var(--muted);
+            font-weight: 800;
+            text-align: left;
+        }
+
+        .muted {
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        /* Modern UI */
+        .title {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 0.2px;
+        }
+
+        .subtitle {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            background: rgba(10, 15, 24, 0.6);
+            color: var(--muted);
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 13px;
+        }
+
+        .pill-warn {
+            border-color: #3a2a00;
+            background: rgba(80, 55, 0, 0.25);
+            color: #ffd78a;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 900;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            filter: brightness(1.08);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+            margin-bottom: 18px;
+        }
+
+        .metric-card {
+            border: 1px solid var(--border);
+            background: rgba(10, 15, 24, 0.55);
+            border-radius: 14px;
+            padding: 12px;
+        }
+
+        .metric-name {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .bar-wrap {
+            margin-top: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(34, 48, 71, 0.6);
+            overflow: hidden;
+        }
+
+        .bar {
+            height: 100%;
+            border-radius: 999px;
+            background: var(--accent);
+        }
+
+        /* Instead of inline width with Jinja, we use classes */
+        .bar-w0 { width: 0%; }
+        .bar-w10 { width: 10%; }
+        .bar-w20 { width: 20%; }
+        .bar-w30 { width: 30%; }
+        .bar-w40 { width: 40%; }
+        .bar-w50 { width: 50%; }
+        .bar-w60 { width: 60%; }
+        .bar-w70 { width: 70%; }
+        .bar-w80 { width: 80%; }
+        .bar-w90 { width: 90%; }
+        .bar-w100 { width: 100%; }
+
+        .section-title {
+            margin: 10px 0 8px 0;
+            font-size: 18px;
+        }
+
+        .table-modern {
+            margin-top: 10px;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .table-modern tbody tr:nth-child(odd) {
+            background: rgba(10, 15, 24, 0.25);
+        }
+
+        .td-num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .table-compact th, .table-compact td {
+            font-size: 13px;
+            padding: 6px 8px;
+        }
+
+        .card-debug {
+            margin-top: 14px;
+        }
+
+        .debug-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 14px;
+            align-items: start;
+        }
+
+        .debug-title {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .debug-img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: #0a0f18;
+        }
+    </style>
 </head>
 <body>
     <header class="topbar">

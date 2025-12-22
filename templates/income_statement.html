@@ -1,13 +1,31 @@
+
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Income Statement</h1>
-
-    <div class="card">
-        <div class="status">
-            <div><b>Status:</b> {{ status }}</div>
+    <div class="page-header">
+        <div>
+            <h1 class="title">Income Statement</h1>
+            <div class="subtitle">
+                <span class="pill">Status: {{ status }}</span>
+                {% if selected_period %}
+                    <span class="pill">Period: {{ selected_period }}</span>
+                {% endif %}
+                {% if debug %}
+                    <span class="pill pill-warn">Debug: ON</span>
+                {% endif %}
+            </div>
         </div>
 
+        <div class="header-actions">
+            {% if debug %}
+                <a class="btn btn-ghost" href="/income-statement?period_idx={{ selected_idx }}&debug=0">Debug</a>
+            {% else %}
+                <a class="btn btn-ghost" href="/income-statement?period_idx={{ selected_idx }}&debug=1">Debug</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
         <form action="/income-statement" method="get" class="row">
             <label class="label">Period</label>
             <select name="period_idx" onchange="this.form.submit()">
@@ -21,18 +39,30 @@
                     {% endfor %}
                 {% endif %}
             </select>
+
+            <input type="hidden" name="debug" value="{{ 1 if debug else 0 }}">
             <noscript><button type="submit">Go</button></noscript>
         </form>
 
+        <div class="metrics-grid">
+            {% for m in key_metrics %}
+                <div class="metric-card">
+                    <div class="metric-name">{{ m.name }}</div>
+                    <div class="metric-value">{{ m.display }}</div>
 
-        <h2>Statement</h2>
+                    <div class="bar-wrap">
+                        <div class="bar bar-w{{ (m.pct // 10) * 10 }}"></div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <h2 class="section-title">Statement</h2>
 
         {% if rows|length == 0 %}
-            <div class="muted">
-                No data for this period. This usually means the row labels exist but that period column is blank, or the parser skipped the cells.
-            </div>
+            <div class="muted">No data for this period.</div>
         {% else %}
-            <table class="table">
+            <table class="table table-modern">
                 <thead>
                     <tr>
                         {% for c in columns %}
@@ -44,13 +74,55 @@
                     {% for r in rows %}
                         <tr>
                             {% for c in columns %}
-                                <td>{{ r[c] }}</td>
+                                <td class="{% if c != 'line_item' %}td-num{% endif %}">{{ r[c] }}</td>
                             {% endfor %}
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% endif %}
-
     </div>
+
+    {% if debug %}
+        <div class="card card-debug">
+            <h2 class="section-title">Debug</h2>
+
+            <div class="debug-grid">
+                <div>
+                    <div class="debug-title">Basic Plot</div>
+                    <img
+                        class="debug-img"
+                        src="/income-statement/plot.png?period_idx={{ selected_idx }}"
+                        alt="Debug plot"
+                    />
+                </div>
+
+                <div>
+                    <div class="debug-title">Details</div>
+                    {% if details_rows|length == 0 %}
+                        <div class="muted">No details table available.</div>
+                    {% else %}
+                        <table class="table table-compact">
+                            <thead>
+                                <tr>
+                                    {% for c in details_cols %}
+                                        <th>{{ c }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in details_rows %}
+                                    <tr>
+                                        {% for c in details_cols %}
+                                            <td>{{ r[c] }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}

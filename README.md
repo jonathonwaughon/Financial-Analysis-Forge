@@ -1,6 +1,6 @@
 # Financial Analysis Forge
 
-![Version](https://img.shields.io/badge/version-0.0.2-blue)
+![Version](https://img.shields.io/badge/version-0.0.3-blue)
 
 
 Created by Jonathon Waughon.
@@ -10,10 +10,9 @@ The goal is to upload financial data and get a clear overlook and breakdown of t
 
 ---
 
-## Current Version: 
-    - Replaced Gradio with Quart for better web handling
-    - Added Excel input handling
-    - Added automatic Excel data reading --> Income Statement template
+## Current Version Features:
+    - Upload an Excel sheet with a company's financial
+    - View income statement
 
 ---
 
