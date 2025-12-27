@@ -1,21 +1,148 @@
-
 {% extends "base.html" %}
 
 {% block content %}
-    <h1 class="title">Upload Excel</h1>
+    <div class="page-header">
+        <div>
+            <h1 class="title">Home</h1>
+            <div class="subtitle">
+                <span class="pill">Financial Analysis Forge</span>
+                <span class="pill">MVP UI</span>
+                {% if status %}
+                    <span class="pill pill-warn">{{ status }}</span>
+                {% endif %}
+            </div>
+        </div>
 
+        <div class="header-actions">
+            <a class="btn btn-ghost" href="/income-statement">Income Statement</a>
+        </div>
+    </div>
+
+    <!-- SECTION 1: File Handling -->
     <div class="card">
+        <h2 class="section-title">1) File handling</h2>
+
         <form action="/upload" method="post" enctype="multipart/form-data">
-            <label class="label">Capital IQ Excel (.xlsx/.xls)</label>
-            <input type="file" name="file" accept=".xlsx,.xls" required />
+            <label class="label">Select an existing Excel file</label>
+
+            <div class="row tight">
+                <select name="excel_select">
+                    {% if excel_files and excel_files|length > 0 %}
+                        {% for f in excel_files %}
+                            <option value="{{ f }}" {% if f == selected_file %}selected{% endif %}>{{ f }}</option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="" selected>No Excel files found</option>
+                    {% endif %}
+                </select>
+
+                <input type="file" name="file" accept=".xlsx,.xls" />
+                <button type="submit">Upload</button>
+            </div>
+
+            <div class="status">
+                <div><b>Status:</b> {{ status or "Idle" }}</div>
+                <div><b>Current Excel:</b> {{ excel_path or (selected_file or "") }}</div>
+            </div>
+
             <div class="row">
-                <button type="submit">Upload + Parse</button>
+                <button type="button" class="btn btn-ghost">Download full financial analysis</button>
+            </div>
+
+            <div class="muted">
+                The download button is UI-only for now (no backend hooked up yet).
             </div>
         </form>
+    </div>
 
-        <div class="status">
-            <div><b>Status:</b> {{ status }}</div>
-            <div><b>Excel:</b> {{ excel_path or "" }}</div>
+    <!-- SECTION 2: Overview -->
+    <div class="card" style="margin-top: 16px;">
+        <h2 class="section-title">2) Picture overview (dummy)</h2>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-name">Revenue (TTM)</div>
+                <div class="metric-value">$1.23B</div>
+                <div class="bar-wrap"><div class="bar bar-w70"></div></div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-name">Gross Margin</div>
+                <div class="metric-value">42.1%</div>
+                <div class="bar-wrap"><div class="bar bar-w40"></div></div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-name">Net Income</div>
+                <div class="metric-value">$123M</div>
+                <div class="bar-wrap"><div class="bar bar-w30"></div></div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-name">Free Cash Flow</div>
+                <div class="metric-value">$98M</div>
+                <div class="bar-wrap"><div class="bar bar-w50"></div></div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-name">Debt / Equity</div>
+                <div class="metric-value">1.2x</div>
+                <div class="bar-wrap"><div class="bar bar-w60"></div></div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-name">Current Ratio</div>
+                <div class="metric-value">1.8x</div>
+                <div class="bar-wrap"><div class="bar bar-w80"></div></div>
+            </div>
+        </div>
+
+        <div class="muted">
+            This section will later read from app_state (or your parsed tables) instead of hardcoded values.
+        </div>
+    </div>
+
+    <!-- SECTION 3: Control Panel -->
+    <div class="card" style="margin-top: 16px;">
+        <h2 class="section-title">3) Control panel (dummy)</h2>
+
+        <div class="row">
+            <div style="min-width: 260px;">
+                <div class="label">Analysis preset</div>
+                <select>
+                    <option selected>Standard</option>
+                    <option>Aggressive</option>
+                    <option>Conservative</option>
+                </select>
+            </div>
+
+            <div style="min-width: 260px;">
+                <div class="label">Valuation model</div>
+                <select>
+                    <option selected>DCF (placeholder)</option>
+                    <option>DDM (placeholder)</option>
+                    <option>Comps (placeholder)</option>
+                </select>
+            </div>
+
+            <div style="min-width: 260px;">
+                <div class="label">Output format</div>
+                <select>
+                    <option selected>PDF (placeholder)</option>
+                    <option>Excel (placeholder)</option>
+                    <option>HTML (placeholder)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <button type="button" class="btn btn-ghost">Run analysis</button>
+            <button type="button" class="btn btn-ghost">Refresh data</button>
+            <button type="button" class="btn btn-ghost">Reset</button>
+        </div>
+
+        <div class="muted">
+            These controls are UI-only right now — we’ll wire them to real routes once your app_state tables are stable.
         </div>
     </div>
 {% endblock %}

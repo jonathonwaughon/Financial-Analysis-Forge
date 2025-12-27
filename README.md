@@ -1,6 +1,6 @@
 # Financial Analysis Forge
 
-![Version](https://img.shields.io/badge/version-0.0.3-blue)
+![Version](https://img.shields.io/badge/version-0.1.1-blue)
 
 
 Created by Jonathon Waughon.

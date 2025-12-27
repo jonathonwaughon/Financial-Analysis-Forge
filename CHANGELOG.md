@@ -1,4 +1,8 @@
-## Current Version (0.1.0)
+## Current Version (0.1.1)
+    - Refactored a lot of code
+    - Created long term scaffolding for modulating
+
+## Version 0.1.0
     - Modulated html templates and template handlers
     - Formatted startup logs
     - Polished program

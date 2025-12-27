@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import io
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 import pandas as pd
 import matplotlib
@@ -10,37 +10,34 @@ import matplotlib.pyplot as plt
 
 from quart import Blueprint, render_template, request, Response, redirect, url_for
 
-from main.globals.app_state import get_table, get_status
+from main.globals.global_state import State
+
 
 bp = Blueprint("income_statement", __name__)
 
 
+def _status() -> str:
+    s = State.find("status", default="")
+    return str(s) if s is not None else ""
+
+
+def _income_statement_root() -> Dict[str, Dict[str, Any]]:
+    root = State.find("income_statement", default={})
+    if isinstance(root, dict):
+        return root
+    return {}
+
+
 def _periods_list() -> List[str]:
-    periods_df = get_table("income_statement_periods")
-    if periods_df.empty or "period" not in periods_df.columns:
-        return []
-    return [str(p).strip() for p in periods_df["period"].tolist() if str(p).strip()]
-
-
-def _raw_income_long() -> pd.DataFrame:
-    raw_df = get_table("income_statement_raw")
-    if raw_df is None or raw_df.empty:
-        return pd.DataFrame()
-    return raw_df.copy()
-
-
-def _period_table(period: str) -> pd.DataFrame:
-    raw_df = _raw_income_long()
-    if raw_df.empty or "period" not in raw_df.columns:
-        return pd.DataFrame(columns=["line_item", "value", "value_numeric"])
-
-    view = raw_df[raw_df["period"] == period].copy()
-
-    keep_cols = [c for c in ["line_item", "value", "value_numeric"] if c in view.columns]
-    view = view[keep_cols]
-
-    view = view.where(pd.notna(view), "")
-    return view.reset_index(drop=True)
+    """
+    Returns periods in display order (most recent first) if possible.
+    Since Capital IQ is usually rightmost = most recent, your parser likely inserted
+    periods in that right-to-left order. Dicts preserve insertion order in Python 3.7+,
+    so we keep the dict key order.
+    """
+    root = _income_statement_root()
+    periods = [str(p) for p in root.keys() if str(p).strip()]
+    return periods
 
 
 def _fmt_number(x: object) -> str:
@@ -59,6 +56,69 @@ def _fmt_number(x: object) -> str:
     if abs_v >= 1_000:
         return f"{v / 1_000:.2f}K"
     return f"{v:,.0f}"
+
+
+def _coerce_numeric(x: object) -> Optional[float]:
+    if x is None or x == "":
+        return None
+    try:
+        return float(x)
+    except Exception:
+        return None
+
+
+def _period_table(period: str) -> pd.DataFrame:
+    """
+    Builds a table for one period:
+        line_item | value | value_numeric
+    Your income_statement dict stores value as numeric when possible, raw otherwise.
+    We set both value and value_numeric based on that.
+    """
+    root = _income_statement_root()
+    period_dict = root.get(period, None)
+
+    if not isinstance(period_dict, dict) or not period_dict:
+        return pd.DataFrame(columns=["line_item", "value", "value_numeric"])
+
+    rows: List[Dict[str, Any]] = []
+    for line_item, val in period_dict.items():
+        vn = _coerce_numeric(val)
+        rows.append({
+            "line_item": str(line_item),
+            "value": val if val is not None else "",
+            "value_numeric": vn,
+        })
+
+    df = pd.DataFrame(rows, columns=["line_item", "value", "value_numeric"])
+    df = df.where(pd.notna(df), "")
+    return df.reset_index(drop=True)
+
+
+def _raw_income_long() -> pd.DataFrame:
+    """
+    Builds a long-form table from nested dicts:
+        line_item | period | value | value_numeric
+    """
+    root = _income_statement_root()
+    if not root:
+        return pd.DataFrame(columns=["line_item", "period", "value", "value_numeric"])
+
+    records: List[Dict[str, Any]] = []
+    for period, period_dict in root.items():
+        if not isinstance(period_dict, dict):
+            continue
+        for line_item, val in period_dict.items():
+            vn = _coerce_numeric(val)
+            records.append({
+                "line_item": str(line_item),
+                "period": str(period),
+                "value": val if val is not None else "",
+                "value_numeric": vn,
+            })
+
+    df = pd.DataFrame(records, columns=["line_item", "period", "value", "value_numeric"])
+    df = df.where(pd.notna(df), "")
+    return df.reset_index(drop=True)
 
 
 def _best_metric(statement_df: pd.DataFrame, needles: List[str]) -> Optional[float]:
@@ -122,11 +182,9 @@ def _resolve_line_item(raw_df: pd.DataFrame, line_item: str) -> Optional[str]:
 
     candidates = raw_df["line_item"].dropna().astype(str).tolist()
 
-    # Exact match
     if line_item in candidates:
         return line_item
 
-    # Case-insensitive match
     li_lower = line_item.lower().strip()
     for c in candidates:
         if str(c).lower().strip() == li_lower:
@@ -155,13 +213,8 @@ def _series_for_line_item(raw_df: pd.DataFrame, periods: List[str], line_item: s
     if view.empty:
         return pd.DataFrame(columns=["period", "value_numeric", "value_display"])
 
-    # Normalize numeric
-    if "value_numeric" in view.columns:
-        view["value_numeric"] = pd.to_numeric(view["value_numeric"], errors="coerce")
-    else:
-        view["value_numeric"] = pd.to_numeric(view.get("value", None), errors="coerce")
+    view["value_numeric"] = pd.to_numeric(view.get("value_numeric", None), errors="coerce")
 
-    # For each period, take the first non-null numeric value (if duplicates exist)
     rows: List[Dict[str, Any]] = []
     for p in periods:
         sub = view[view["period"] == p]
@@ -179,12 +232,6 @@ def _series_for_line_item(raw_df: pd.DataFrame, periods: List[str], line_item: s
 
     out = pd.DataFrame(rows, columns=["period", "value_numeric", "value_display"])
     return out
-
-
-
-
-
-
 
 
 @bp.get("/income-statement")
@@ -213,21 +260,16 @@ async def income_statement():
 
     key_metrics = _compute_key_metrics(table_df)
 
-    details_df = get_table("income_statement_details")
-    if details_df is None or details_df.empty:
-        details_cols: List[str] = []
-        details_rows: List[Dict[str, Any]] = []
-    else:
-        safe = details_df.where(pd.notna(details_df), "")
-        details_cols = [str(c) for c in safe.columns.tolist()]
-        details_rows = safe.to_dict(orient="records")
+    # You no longer have income_statement_details in the new system (unless you add it)
+    details_cols: List[str] = []
+    details_rows: List[Dict[str, Any]] = []
 
     rows = table_df.to_dict(orient="records")
     columns = list(table_df.columns)
 
     return await render_template(
         "income_statement.html",
-        status=get_status(),
+        status=_status(),
         periods=periods,
         selected_idx=selected_idx,
         selected_period=selected_period,
@@ -242,15 +284,11 @@ async def income_statement():
 
 @bp.get("/income_statement")
 async def income_statement_alias():
-    return redirect(url_for("income_statement"))
+    return redirect(url_for("income_statement.income_statement"))
 
 
 @bp.get("/income_statement/<path:line_item>")
 async def income_statement_line_item(line_item: str):
-    """
-    Drilldown page for a specific line_item.
-    Shows latest value, average across periods, and a line chart across all periods.
-    """
     raw_df = _raw_income_long()
     periods = _periods_list()
 
@@ -258,7 +296,7 @@ async def income_statement_line_item(line_item: str):
     if resolved is None:
         return await render_template(
             "income_statement_item.html",
-            status=get_status(),
+            status=_status(),
             line_item=line_item,
             resolved_line_item=None,
             periods=periods,
@@ -269,14 +307,12 @@ async def income_statement_line_item(line_item: str):
 
     series_df = _series_for_line_item(raw_df, periods, resolved)
 
-    # Latest = first non-null in most-recent-first order
     latest_val = None
     for x in series_df["value_numeric"].tolist():
         if x is not None and pd.notna(x):
             latest_val = float(x)
             break
 
-    # Average across available numeric values
     nums = [float(x) for x in series_df["value_numeric"].tolist() if x is not None and pd.notna(x)]
     avg_val = (sum(nums) / len(nums)) if nums else None
 
@@ -287,7 +323,7 @@ async def income_statement_line_item(line_item: str):
 
     return await render_template(
         "income_statement_item.html",
-        status=get_status(),
+        status=_status(),
         line_item=line_item,
         resolved_line_item=resolved,
         periods=periods,
@@ -310,30 +346,25 @@ async def income_statement_line_item_plot(line_item: str):
     if series_df.empty:
         return Response(b"", mimetype="image/png")
 
-    # For chart readability, plot oldest -> newest
     plot_df = series_df.copy()
     plot_df["value_numeric"] = pd.to_numeric(plot_df["value_numeric"], errors="coerce")
-    plot_df = plot_df.iloc[::-1].reset_index(drop=True)  # reverse so oldest first
+    plot_df = plot_df.iloc[::-1].reset_index(drop=True)  # oldest -> newest
 
-    # Build x (period labels) and y (numeric values)
     x = plot_df["period"].tolist()
     y = plot_df["value_numeric"].tolist()
 
-    # Plot by numeric index and set a small number of xtick labels evenly across the range
-    max_ticks = 6  # includes first & last. Change to 5 if you want exactly 5 labels.
+    max_ticks = 6
     xs = list(range(len(x)))
 
     fig = plt.figure(figsize=(10, 4.5))
     ax = fig.add_subplot(111)
     ax.plot(xs, y, marker="o")
 
-    # Compute tick positions and labels
     n = len(xs)
     if n <= max_ticks:
         tick_pos = xs
         tick_labels = x
     else:
-        # evenly spaced indices including first and last
         step = (n - 1) / (max_ticks - 1)
         tick_pos = [int(round(i * step)) for i in range(max_ticks)]
         tick_labels = [x[i] for i in tick_pos]
