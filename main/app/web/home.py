@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from quart import Blueprint, render_template, request, redirect, url_for
-from main.globals.global_state import State
+from main.core.logic_engine import LogicEngine
 from main.handlers.income_statement import parse_income_statement_tables_from_path
 
 import os
@@ -31,13 +31,13 @@ def _list_excel_files(upload_dir: str) -> list[str]:
     return excel_files
     
 def update_excel_path(new_path: str) -> None:
-    State.set("excel_path", new_path)
-    parse_income_statement_tables_from_path(new_path, progress_cb=None)
+    LogicEngine.update_excel(new_path)
+    LogicEngine.parse_excel()
 
 
 @bp.get("/")
 async def index():
-    path = State.get("excel_path")
+    path = LogicEngine.get_state().get("excel_path")
     upload_dir = os.path.join(os.getcwd(), "storage", "uploads")
     os.makedirs(upload_dir, exist_ok=True)
     print(upload_dir)

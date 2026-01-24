@@ -1,4 +1,7 @@
-## Current Version (0.1.1)
+## Current Version (0.1.2)
+    - Restructured internal components
+
+## Version (0.1.1)
     - Refactored a lot of code
     - Created long term scaffolding for modulating
 
@@ -11,6 +14,7 @@
     - Buffed styling of the project, ported into html only
     - Reworked to be strictly Python based
     - Added Debug to statement page
+
 ## Version 0.0.2
     - Replaced Gradio with Quart for better web handling
     - Added Excel input handling

@@ -13,7 +13,7 @@ import os
 
 import pandas as pd
 
-
+from main.globals.global_state import State
 
 
 def _norm(text: object) -> str:
@@ -111,7 +111,6 @@ def _extract_col_to_period(period_labels: list[str | None]) -> dict[int, str]:
 
 
 def parse_income_statement_tables_from_path(path: str, progress_cb=None) -> None:
-    print(path)
     """
     Reads the income statement sheet and saves the extracted values to:
         State._data["income_statement"][period][line_item] = value_numeric_or_raw
@@ -185,4 +184,6 @@ def parse_income_statement_tables_from_path(path: str, progress_cb=None) -> None
             income_statement[period][line_item] = value_to_store
 
     push("Saving income_statement into State._data...")
-    return income_statement
+    State.insert_data("income_statement", income_statement)
+
+    push("Income Statement parsing done.")

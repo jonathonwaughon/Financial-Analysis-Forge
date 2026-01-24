@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rich.console import Console
 from quart import Quart
-import main.globals.configurator as config
+import main.core.configurator as config
 
 # Blueprint imports
 from main.app.web.home import bp as home_bp

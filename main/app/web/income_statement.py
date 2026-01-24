@@ -10,19 +10,19 @@ import matplotlib.pyplot as plt
 
 from quart import Blueprint, render_template, request, Response, redirect, url_for
 
-from main.globals.global_state import State
+from main.core.logic_engine import LogicEngine
 
 
 bp = Blueprint("income_statement", __name__)
 
 
 def _status() -> str:
-    s = State.find("status", default="")
+    s = LogicEngine.get_state().find("status", default="")
     return str(s) if s is not None else ""
 
 
 def _income_statement_root() -> Dict[str, Dict[str, Any]]:
-    root = State.find("income_statement", default={})
+    root = LogicEngine.get_state().find("income_statement", default={})
     if isinstance(root, dict):
         return root
     return {}

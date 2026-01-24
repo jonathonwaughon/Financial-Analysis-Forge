@@ -149,4 +149,4 @@ class GlobalState:
         return getattr(self, key)
 
 
-State = GlobalState()
+
