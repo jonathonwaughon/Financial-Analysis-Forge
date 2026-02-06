@@ -2,7 +2,7 @@
 
 # Financial Analysis Forge
 
-![Version](https://img.shields.io/badge/version-0.1.2-blue)
+![Version](https://img.shields.io/badge/version-0.1.4-blue)
 ![Version](https://img.shields.io/badge/build-experimental-green)
 
 

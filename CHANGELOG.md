@@ -1,4 +1,11 @@
-## Current Version (0.1.2)
+## Current Version (0.1.4)
+    - Added installer and improved README
+
+## Version 0.1.3
+    - Rewired global state into logic engine
+    - Added balance sheet functionality
+
+## Version 0.1.2
     - Restructured internal components
 
 ## Version (0.1.1)

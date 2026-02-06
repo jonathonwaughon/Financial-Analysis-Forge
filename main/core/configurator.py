@@ -35,7 +35,7 @@ _DEFAULTS: Dict[str, Any] = {
 		"show_value_numeric_column": True
 	},
     "DO_NOT_MODIFY" : {
-        "version" : "0.1.0",
+        "version" : "0.1.4",
         "QARS" : "SS49"
     }
 }
