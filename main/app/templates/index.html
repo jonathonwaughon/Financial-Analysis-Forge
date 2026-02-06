@@ -1,148 +1,304 @@
 {% extends "base.html" %}
 
+{% block container_class %}container-wide{% endblock %}
+
 {% block content %}
-    <div class="page-header">
-        <div>
-            <h1 class="title">Home</h1>
-            <div class="subtitle">
-                <span class="pill">Financial Analysis Forge</span>
-                <span class="pill">MVP UI</span>
-                {% if status %}
-                    <span class="pill pill-warn">{{ status }}</span>
-                {% endif %}
-            </div>
-        </div>
+<style>
+	/* Home-specific dashboard layout */
+	.home-grid {
+		display: grid;
+		grid-template-columns: 1fr 1.15fr 1fr;
+		gap: 12px;
 
-        <div class="header-actions">
-            <a class="btn btn-ghost" href="/income-statement">Income Statement</a>
-        </div>
-    </div>
+		/* use most of the screen below the topbar */
+		height: calc(95vh - 72px);
+	}
 
-    <!-- SECTION 1: File Handling -->
-    <div class="card">
-        <h2 class="section-title">1) File handling</h2>
+	.home-col {
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+	}
 
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <label class="label">Select an existing Excel file</label>
+    button {
+        transition:
+            transform 140ms ease,
+            filter 140ms ease,
+            box-shadow 140ms ease;
+        will-change: transform;
+    }
 
-            <div class="row tight">
-                <select name="excel_select">
-                    {% if excel_files and excel_files|length > 0 %}
-                        {% for f in excel_files %}
-                            <option value="{{ f }}" {% if f == selected_file %}selected{% endif %}>{{ f }}</option>
-                        {% endfor %}
-                    {% else %}
-                        <option value="" selected>No Excel files found</option>
-                    {% endif %}
-                </select>
+    button:hover {
+        transform: scale(1.04);
+        filter: brightness(1.08);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+    }
 
-                <input type="file" name="file" accept=".xlsx,.xls" />
-                <button type="submit">Upload</button>
-            </div>
+    button:active {
+        transform: scale(0.97);
+        filter: brightness(0.98);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
 
-            <div class="status">
-                <div><b>Status:</b> {{ status or "Idle" }}</div>
-                <div><b>Current Excel:</b> {{ excel_path or (selected_file or "") }}</div>
-            </div>
 
-            <div class="row">
-                <button type="button" class="btn btn-ghost">Download full financial analysis</button>
-            </div>
+	/* Side panels: single tall card */
+	.side-card-left {
+		flex: 1;
+		min-height: 0;
+		overflow: auto;
+		border-radius: 14px;
+		background:
+			radial-gradient(circle at bottom left, rgba(79,140,255,0.18), transparent 55%),
+			rgba(10, 15, 24, 0.45);
+	}
+    .side-card-right {
+		flex: 1;
+		min-height: 0;
+		overflow: auto;
+		border-radius: 14px;
+		background:
+			radial-gradient(circle at top right, rgba(79,140,255,0.18), transparent 55%),
+			rgba(10, 15, 24, 0.45);
+	}
 
-            <div class="muted">
-                The download button is UI-only for now (no backend hooked up yet).
-            </div>
-        </form>
-    </div>
+	/* Center: two stacked cards, 30/70 split */
+	.center-stack {
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
 
-    <!-- SECTION 2: Overview -->
-    <div class="card" style="margin-top: 16px;">
-        <h2 class="section-title">2) Picture overview (dummy)</h2>
+	.center-top {
+		flex: 3; /* ~30% */
+		min-height: 0;
+		border-radius: 14px;
+		background:
+			radial-gradient(circle at top left, rgba(79,140,255,0.18), transparent 55%),
+			rgba(10, 15, 24, 0.45);
+	}
 
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-name">Revenue (TTM)</div>
-                <div class="metric-value">$1.23B</div>
-                <div class="bar-wrap"><div class="bar bar-w70"></div></div>
-            </div>
+	.center-bot {
+		flex: 7; /* ~70% */
+		min-height: 0;
+		overflow: auto;
+		border-radius: 14px;
+		background:
+			radial-gradient(circle at bottom right, rgba(79,140,255,0.14), transparent 60%),
+			rgba(10, 15, 24, 0.45);
+	}
 
-            <div class="metric-card">
-                <div class="metric-name">Gross Margin</div>
-                <div class="metric-value">42.1%</div>
-                <div class="bar-wrap"><div class="bar bar-w40"></div></div>
-            </div>
+	/* polish: tighter cards inside the "card" class you already have */
+	.card.tight {
+		padding: 14px;
+	}
 
-            <div class="metric-card">
-                <div class="metric-name">Net Income</div>
-                <div class="metric-value">$123M</div>
-                <div class="bar-wrap"><div class="bar bar-w30"></div></div>
-            </div>
+	.section-head {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 10px;
+		margin-bottom: 10px;
+	}
 
-            <div class="metric-card">
-                <div class="metric-name">Free Cash Flow</div>
-                <div class="metric-value">$98M</div>
-                <div class="bar-wrap"><div class="bar bar-w50"></div></div>
-            </div>
+	.section-title2 {
+		margin: 0;
+		font-size: 16px;
+		font-weight: 900;
+		letter-spacing: 0.2px;
+	}
 
-            <div class="metric-card">
-                <div class="metric-name">Debt / Equity</div>
-                <div class="metric-value">1.2x</div>
-                <div class="bar-wrap"><div class="bar bar-w60"></div></div>
-            </div>
+	.small-muted {
+		color: var(--muted);
+		font-size: 13px;
+		margin-top: 6px;
+	}
 
-            <div class="metric-card">
-                <div class="metric-name">Current Ratio</div>
-                <div class="metric-value">1.8x</div>
-                <div class="bar-wrap"><div class="bar bar-w80"></div></div>
-            </div>
-        </div>
+	/* Make selects/buttons feel good in tight space */
+	.row.tight {
+		margin-top: 8px;
+	}
 
-        <div class="muted">
-            This section will later read from app_state (or your parsed tables) instead of hardcoded values.
-        </div>
-    </div>
+	/* Responsive: stack on small screens */
+	@media (max-width: 980px) {
+		.home-grid {
+			grid-template-columns: 1fr;
+			height: auto;
+		}
+		.side-card, .center-top, .center-bot {
+			height: auto;
+		}
+	}
+</style>
 
-    <!-- SECTION 3: Control Panel -->
-    <div class="card" style="margin-top: 16px;">
-        <h2 class="section-title">3) Control panel (dummy)</h2>
+<div class="page-header">
+	<div>
+		<h1 class="title">Home</h1>
+		<div class="subtitle">
+			<span class="pill">Financial Analysis Forge</span>
+			<span class="pill">MVP UI</span>
+			{% if status %}
+				<span class="pill pill-warn">{{ status }}</span>
+			{% endif %}
+		</div>
+	</div>
 
-        <div class="row">
-            <div style="min-width: 260px;">
-                <div class="label">Analysis preset</div>
-                <select>
-                    <option selected>Standard</option>
-                    <option>Aggressive</option>
-                    <option>Conservative</option>
-                </select>
-            </div>
+	<div class="header-actions">
+		<a class="btn btn-ghost" href="/income-statement">Income Statement</a>
+	</div>
 
-            <div style="min-width: 260px;">
-                <div class="label">Valuation model</div>
-                <select>
-                    <option selected>DCF (placeholder)</option>
-                    <option>DDM (placeholder)</option>
-                    <option>Comps (placeholder)</option>
-                </select>
-            </div>
+	<div class="header-actions">
+		<a class="btn btn-ghost" href="/balance-sheet">Balance Sheet</a>
+	</div>
+</div>
 
-            <div style="min-width: 260px;">
-                <div class="label">Output format</div>
-                <select>
-                    <option selected>PDF (placeholder)</option>
-                    <option>Excel (placeholder)</option>
-                    <option>HTML (placeholder)</option>
-                </select>
-            </div>
-        </div>
+<div class="home-grid">
+	<!-- LEFT THIRD -->
+	<div class="home-col">
+		<div class="card side-card-left">
+			<div class="section-head">
+				<div>
+					<div class="section-title2">Left Display</div>
+					<div class="small-muted"> sheet preview / recent files / parser warnings here.</div>
+				</div>
+				<span class="pill">L</span>
+			</div>
 
-        <div class="row">
-            <button type="button" class="btn btn-ghost">Run analysis</button>
-            <button type="button" class="btn btn-ghost">Refresh data</button>
-            <button type="button" class="btn btn-ghost">Reset</button>
-        </div>
+			<div class="status">
+				<div><b>Status:</b> {{ status or "Idle" }}</div>
+				<div><b>Current Excel:</b> {{ excel_path or (selected_file or "None") }}</div>
+			</div>
 
-        <div class="muted">
-            These controls are UI-only right now — we’ll wire them to real routes once your app_state tables are stable.
-        </div>
-    </div>
+			<div class="muted">
+				placeholder
+			</div>
+		</div>
+	</div>
+
+	<!-- CENTER THIRD (MAIN) -->
+	<div class="home-col">
+		<div class="center-stack">
+			<!-- TOP 30%: File handler -->
+			<div class="card center-top tight">
+				<div class="section-head">
+					<div>
+						<div class="section-title2">File handling</div>
+						<div class="small-muted">Select an existing Excel file or upload a new one.</div>
+					</div>
+					<span class="pill">30%</span>
+				</div>
+
+				<form action="/upload" method="post" enctype="multipart/form-data">
+					<div class="row tight">
+						<select name="excel_select">
+							{% if excel_files and excel_files|length > 0 %}
+								{% for f in excel_files %}
+									<option value="{{ f }}" {% if f == selected_file %}selected{% endif %}>{{ f }}</option>
+								{% endfor %}
+							{% else %}
+								<option value="" selected>No Excel files found</option>
+							{% endif %}
+						</select>
+
+						<input type="file" name="file" accept=".xlsx,.xls" />
+						<button type="submit" class="button">Upload</button>
+					</div>
+
+					<div class="status">
+						<div><b>Status:</b> {{ status or "Idle" }}</div>
+						<div><b>Current Excel:</b> {{ excel_path or (selected_file or "") }}</div>
+					</div>
+				</form>
+			</div>
+
+			<!-- BOTTOM 70%: Control panel -->
+			<div class="card center-bot tight">
+				<div class="section-head">
+					<div>
+						<div class="section-title2">Control panel</div>
+						<div class="small-muted">placeholders</div>
+					</div>
+					<span class="pill">70%</span>
+				</div>
+
+				<div class="row">
+					<div style="min-width: 260px;">
+						<div class="label">Analysis preset</div>
+						<select>
+							<option selected>Standard</option>
+							<option>Aggressive</option>
+							<option>Conservative</option>
+						</select>
+					</div>
+
+					<div style="min-width: 260px;">
+						<div class="label">Valuation model</div>
+						<select>
+							<option selected>DCF (placeholder)</option>
+							<option>DDM (placeholder)</option>
+							<option>Comps (placeholder)</option>
+						</select>
+					</div>
+
+					<div style="min-width: 260px;">
+						<div class="label">Output format</div>
+						<select>
+							<option selected>PDF (placeholder)</option>
+							<option>Excel (placeholder)</option>
+							<option>HTML (placeholder)</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="row">
+					<button type="button" class="btn btn-ghost">Run analysis</button>
+					<button type="button" class="btn btn-ghost">Refresh data</button>
+					<button type="button" class="btn btn-ghost">Reset</button>
+				</div>
+
+				<div class="muted">
+					Control panel space is intentionally large 
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- RIGHT THIRD -->
+	<div class="home-col">
+		<div class="card side-card-right">
+			<div class="section-head">
+				<div>
+					<div class="section-title2">Right Display</div>
+					<div class="small-muted">KPIs / overview / “found statements” status.</div>
+				</div>
+				<span class="pill">R</span>
+			</div>
+
+			<div class="metrics-grid" style="margin-top: 0;">
+				<div class="metric-card">
+					<div class="metric-name">Revenue (TTM)</div>
+					<div class="metric-value">$1.23B</div>
+					<div class="bar-wrap"><div class="bar bar-w70"></div></div>
+				</div>
+
+				<div class="metric-card">
+					<div class="metric-name">Net Income</div>
+					<div class="metric-value">$123M</div>
+					<div class="bar-wrap"><div class="bar bar-w30"></div></div>
+				</div>
+
+				<div class="metric-card">
+					<div class="metric-name">Current Ratio</div>
+					<div class="metric-value">1.8x</div>
+					<div class="bar-wrap"><div class="bar bar-w80"></div></div>
+				</div>
+			</div>
+
+			<div class="muted">
+				read from app-state
+			</div>
+		</div>
+	</div>
+</div>
 {% endblock %}

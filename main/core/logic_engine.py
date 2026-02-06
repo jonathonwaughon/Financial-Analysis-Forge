@@ -8,6 +8,7 @@
 
 from main.core.global_state import GlobalState
 from main.handlers.income_statement import parse_income_statement_tables_from_path
+from main.handlers.balance_sheet import parse_balance_sheet_tables_from_path
 
 class Engine():
 
@@ -32,5 +33,7 @@ class Engine():
             return
         income_statement = parse_income_statement_tables_from_path(self.GlobalState.excel_path)
         self.GlobalState.insert_data("income_statement", income_statement)
+        balance_sheet = parse_balance_sheet_tables_from_path(self.GlobalState.excel_path)
+        self.GlobalState.insert_data("balance_sheet", balance_sheet)
 
 LogicEngine = Engine()

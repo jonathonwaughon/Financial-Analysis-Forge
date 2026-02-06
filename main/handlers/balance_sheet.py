@@ -1,9 +1,9 @@
-# File name: income_statement_table.py
-# Created: 12/22/2025 08:xx PM
-# Purpose: Parse Capital IQ Income Statement into nested dicts by period in GlobalState._data
+# File name: balance_sheet.py
+# Created: 2/2/2026 11:59 AM
+# Purpose: Parse Capital IQ Balance Sheet into nested dicts by period in GlobalState._data
 # Notes:
-# - Stores output at: State._data["income_statement"][<period>][<line_item>] = <value_numeric_or_raw>
-# - Periods are derived from the 2 header rows under "Income Statement"
+# - Stores output at: State._data["balance_sheet"][<period>][<line_item>] = <value_numeric_or_raw>
+# - Periods are derived from the 2 header rows under "Balance Sheet"
 # - Most recent period is typically the RIGHTMOST column in Capital IQ
 # Used: Yes
 
@@ -13,7 +13,7 @@ import os
 
 import pandas as pd
 
-from main.globals.global_state import State
+
 
 
 def _norm(text: object) -> str:
@@ -56,17 +56,17 @@ def _parse_numeric(value: object):
         return None
 
 
-def _find_income_statement_start(raw: pd.DataFrame) -> int | None:
+def _find_balance_sheet_start(raw: pd.DataFrame) -> int | None:
     # Fast pass: first column
     for r in range(len(raw)):
-        if _norm(raw.iat[r, 0]) == "income statement":
+        if _norm(raw.iat[r, 0]) == "balance sheet":
             return r
 
     # Wider pass: check first ~12 columns
     max_c = min(raw.shape[1], 12)
     for r in range(len(raw)):
         for c in range(max_c):
-            if _norm(raw.iat[r, c]) == "income statement":
+            if _norm(raw.iat[r, c]) == "balance sheet":
                 return r
 
     return None
@@ -74,7 +74,7 @@ def _find_income_statement_start(raw: pd.DataFrame) -> int | None:
 
 def _build_period_labels(raw: pd.DataFrame, start_row: int) -> list[str | None]:
     """
-    Capital IQ typically has two header rows under the "Income Statement" header.
+    Capital IQ typically has two header rows under the "Balance Sheet" header.
     We combine them into one string per column: "<top> <bottom>".
     """
     labels: list[str | None] = [None] * raw.shape[1]
@@ -110,10 +110,11 @@ def _extract_col_to_period(period_labels: list[str | None]) -> dict[int, str]:
     return col_to_period
 
 
-def parse_income_statement_tables_from_path(path: str, progress_cb=None) -> None:
+def parse_balance_sheet_tables_from_path(path: str, progress_cb=None) -> None:
+    print(path)
     """
-    Reads the income statement sheet and saves the extracted values to:
-        State._data["income_statement"][period][line_item] = value_numeric_or_raw
+    Reads the balance sheet sheet and saves the extracted values to:
+        State._data["balance_sheet"][period][line_item] = value_numeric_or_raw
 
     If numeric parsing fails, we store the cleaned raw cell.
     """
@@ -124,19 +125,19 @@ def parse_income_statement_tables_from_path(path: str, progress_cb=None) -> None
     push("Opening Excel...")
     xl = pd.ExcelFile(path)
 
-    # Pick a sheet likely to be the income statement
-    sheet_candidates = [s for s in xl.sheet_names if "income" in s.lower()]
+    # Pick a sheet likely to be the balance sheet
+    sheet_candidates = [s for s in xl.sheet_names if "balance" in s.lower()]
     sheet_name = sheet_candidates[0] if sheet_candidates else xl.sheet_names[0]
 
     push(f"Reading sheet: {sheet_name}")
     raw = pd.read_excel(xl, sheet_name=sheet_name, header=None)
 
-    push("Locating Income Statement header...")
-    start_row = _find_income_statement_start(raw)
+    push("Locating Balance Sheet header...")
+    start_row = _find_balance_sheet_start(raw)
     if start_row is None:
         # Store an error payload in the same structure the UI expects
-        State.insert_data("income_statement", {"_error": f"Could not find 'Income Statement' in '{sheet_name}'"})
-        push("Failed: Income Statement header not found.")
+        State.insert_data("balance_sheet", {"_error": f"Could not find 'Balance Sheet' in '{sheet_name}'"})
+        push("Failed: Balance Sheet header not found.")
         return
 
     push("Building period labels...")
@@ -144,14 +145,14 @@ def parse_income_statement_tables_from_path(path: str, progress_cb=None) -> None
     col_to_period = _extract_col_to_period(period_labels)
 
     # Create root dict
-    income_statement: dict[str, dict[str, object]] = {}
+    balance_sheet: dict[str, dict[str, object]] = {}
 
     # Pre-create period dicts so order is stable-ish
     # (Most recent period is typically the rightmost column, but dict order isn’t used for logic.)
     for c in sorted(col_to_period.keys(), reverse=True):
         period = col_to_period[c]
-        if period not in income_statement:
-            income_statement[period] = {}
+        if period not in balance_sheet:
+            balance_sheet[period] = {}
 
     push("Extracting line items and values...")
     for r in range(start_row + 3, len(raw)):
@@ -178,12 +179,10 @@ def parse_income_statement_tables_from_path(path: str, progress_cb=None) -> None
             value_to_store = num if num is not None else cell
 
             # Ensure period dict exists
-            if period not in income_statement:
-                income_statement[period] = {}
+            if period not in balance_sheet:
+                balance_sheet[period] = {}
 
-            income_statement[period][line_item] = value_to_store
+            balance_sheet[period][line_item] = value_to_store
 
-    push("Saving income_statement into State._data...")
-    State.insert_data("income_statement", income_statement)
-
-    push("Income Statement parsing done.")
+    push("Saving balance_sheet into State._data...")
+    return balance_sheet
