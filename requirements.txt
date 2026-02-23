@@ -3,3 +3,4 @@ hypercorn
 pandas
 openpyxl
 matplotlib
+xlrd
