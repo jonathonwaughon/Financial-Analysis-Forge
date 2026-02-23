@@ -1,4 +1,9 @@
-## Current Version (0.1.4)
+## Current Version (0.1.5)
+    - Removed installer for time being
+    - Patched excel selection
+    - Updated instructions
+
+## Version 0.1.4
     - Added installer and improved README
 
 ## Version 0.1.3

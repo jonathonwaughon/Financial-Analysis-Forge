@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from quart import Blueprint, render_template, request, redirect, url_for
+from quart import Blueprint, render_template, request, redirect, url_for, jsonify
 from main.core.logic_engine import LogicEngine
 from main.handlers.income_statement import parse_income_statement_tables_from_path
 
@@ -8,6 +8,9 @@ import os
 
 
 bp = Blueprint("home", __name__)
+
+upload_dir = os.path.join(os.getcwd(), "storage", "uploads")
+os.makedirs(upload_dir, exist_ok=True)
 
 
 
@@ -38,25 +41,51 @@ def update_excel_path(new_path: str) -> None:
 @bp.get("/")
 async def index():
     path = LogicEngine.get_state().get("excel_path")
-    upload_dir = os.path.join(os.getcwd(), "storage", "uploads")
-    os.makedirs(upload_dir, exist_ok=True)
+    print("Path: ")
+    print(path)
     print(upload_dir)
     files = _list_excel_files(upload_dir)
     print(files)
     if path == None:
+        print("Nonr path, defaulting to first excel in list")
         if files:
             path = os.path.join(upload_dir, files[0])
             update_excel_path(path)
         
 
+    # Convert full path -> filename so the <select> can match it
+    selected_file = os.path.basename(path) if path else None
+
     return await render_template(
         "index.html",
         status="Running",
-        excel_path=path,
+        excel_path=path, # actual path
         excel_files=files,
-        selected_file=path,
+        selected_file=selected_file, # functions as the filename, for readability
     )
 
+@bp.post("/select_excel")
+async def select_excel():
+    data = await request.get_json()
+    filename = (data or {}).get("excel_select")
+    if not filename:
+        return jsonify({"ok": False, "error": "No file selected"}), 400
+
+    # IMPORTANT: validate filename is one of your allowed excel_files
+    # IMPORTANT: build the full path safely (don’t allow ../ tricks)
+
+    # Do your parse here
+	# summary = await asyncio.to_thread(parse_excel, full_path)
+    path = os.path.join(upload_dir, filename)
+    update_excel_path(path)
+
+    return jsonify({
+        "ok": True,
+        "status": "Parsed ✅",
+        "selected_file": filename,
+        "excel_path": filename,      # or full_path if you want
+        "progress_text": "100%"
+    })
 
 @bp.post("/upload")
 async def upload_and_parse():

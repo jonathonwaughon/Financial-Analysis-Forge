@@ -143,14 +143,6 @@
 			{% endif %}
 		</div>
 	</div>
-
-	<div class="header-actions">
-		<a class="btn btn-ghost" href="/income-statement">Income Statement</a>
-	</div>
-
-	<div class="header-actions">
-		<a class="btn btn-ghost" href="/balance-sheet">Balance Sheet</a>
-	</div>
 </div>
 
 <div class="home-grid">
@@ -184,14 +176,14 @@
 				<div class="section-head">
 					<div>
 						<div class="section-title2">File handling</div>
-						<div class="small-muted">Select an existing Excel file or upload a new one.</div>
+						<div class="small-muted" id="fileHint">Select an existing Excel file or upload a new one.</div>
 					</div>
-					<span class="pill">30%</span>
+					<span class="pill" id="filePill">30%</span>
 				</div>
 
 				<form action="/upload" method="post" enctype="multipart/form-data">
 					<div class="row tight">
-						<select name="excel_select">
+						<select name="excel_select" id="excelSelect">
 							{% if excel_files and excel_files|length > 0 %}
 								{% for f in excel_files %}
 									<option value="{{ f }}" {% if f == selected_file %}selected{% endif %}>{{ f }}</option>
@@ -206,11 +198,66 @@
 					</div>
 
 					<div class="status">
-						<div><b>Status:</b> {{ status or "Idle" }}</div>
-						<div><b>Current Excel:</b> {{ excel_path or (selected_file or "") }}</div>
+						<div><b>Status:</b> <span id="statusText">{{ status or "Idle" }}</span></div>
+						<div><b>Current Excel:</b> <span id="currentExcel">{{ excel_path or (selected_file or "") }}</span></div>
 					</div>
 				</form>
 			</div>
+
+			<script>
+				(() => {
+					const excelSelect   = document.getElementById("excelSelect");
+					const statusText    = document.getElementById("statusText");
+					const currentExcel  = document.getElementById("currentExcel");
+					const filePill      = document.getElementById("filePill");
+					const fileHint      = document.getElementById("fileHint");
+
+					if (!excelSelect) return;
+
+					excelSelect.addEventListener("change", async () => {
+						const selected = excelSelect.value;
+						if (!selected) return;
+
+						// Optimistic UI
+						statusText.textContent = "Selecting / parsing...";
+						currentExcel.textContent = selected;
+						filePill.textContent = "...";
+						fileHint.textContent = `Loading ${selected}...`;
+
+						try {
+							const res = await fetch("/select_excel", {
+								method: "POST",
+								headers: { "Content-Type": "application/json" },
+								body: JSON.stringify({ excel_select: selected })
+							});
+
+							const data = await res.json();
+
+							if (!res.ok || !data.ok) {
+								statusText.textContent = "Failed";
+								filePill.textContent = "!";
+								fileHint.textContent = data.error || "Failed to select Excel file.";
+								return;
+							}
+
+							// Update UI from server truth
+							statusText.textContent = data.status ?? "Ready";
+							currentExcel.textContent = data.excel_path ?? data.selected_file ?? selected;
+							filePill.textContent = data.progress_text ?? "100%";
+							fileHint.textContent = "Select an existing Excel file or upload a new one.";
+
+							// If you return extra stuff (optional), update it here:
+							// e.g. window.dispatchEvent(new CustomEvent("excel:updated", { detail: data }));
+							// e.g. document.getElementById("summary").textContent = JSON.stringify(data.summary, null, 2);
+
+						} catch (err) {
+							statusText.textContent = "Failed";
+							filePill.textContent = "!";
+							fileHint.textContent = "Network error while selecting Excel file.";
+						}
+					});
+				})();
+			</script>
 
 			<!-- BOTTOM 70%: Control panel -->
 			<div class="card center-bot tight">

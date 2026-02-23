@@ -2,7 +2,7 @@
 
 # Financial Analysis Forge
 
-![Version](https://img.shields.io/badge/version-0.1.4-blue)
+![Version](https://img.shields.io/badge/version-0.1.5-blue)
 ![Version](https://img.shields.io/badge/build-experimental-green)
 
 
@@ -22,7 +22,8 @@ Financial Analysis Forge is heavily python-focused web-based application.
 
 1. Download the .zip file and extract the folder wherever desired
 2. Download the latest Python package (https://www.python.org/downloads/)
-4. Start the program using run.bat
+3. Start the program using run.bat
+4. Open the program in your browser (Default link: http://127.0.0.1:5000)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
