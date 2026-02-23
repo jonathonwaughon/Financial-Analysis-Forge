@@ -5,8 +5,12 @@
 # - Use this if you are trying to create your own handler
 # Used: Yes
 
-
+# Attributes
+__script_attributes__ = {
+    "logic_handler" : True,
+    
+}
 
 
 class Handler():
-    
+    lol = "s"

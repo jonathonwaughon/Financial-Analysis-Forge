@@ -21,8 +21,7 @@ Financial Analysis Forge is heavily python-focused web-based application.
 ### Set Up
 
 1. Download the .zip file and extract the folder wherever desired
-2. Run the installer inside the main folder
-3. (Optional) After installation, verify integrity by using ```sh git status```
+2. Download the latest Python package (https://www.python.org/downloads/)
 4. Start the program using run.bat
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
